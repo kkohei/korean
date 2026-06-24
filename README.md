@@ -134,10 +134,46 @@ xattr -dr com.apple.quarantine KoreanTranslator.app
 | `Sources/KoreanTranslator/Theme.swift` | 配色・等幅フォント・半透明背景 |
 | `AppIcon.iconset/` | アプリアイコン（ビルド時に `.icns` へ変換） |
 | `build.sh` | `.app` バンドルの生成・アイコン埋め込み・署名 |
+| `make-dmg.sh` | 配布用 `.dmg` の作成 |
+| `docs/index.html` | GitHub Pages 用ダウンロードページ |
+| `INSTALL.md` | 配布先の人向けインストール手順 |
 
 ---
 
-## 8. 費用について
+## 8. 個人で配布する
+
+### (1) 配布用 DMG を作る
+
+```bash
+./make-dmg.sh              # KoreanTranslator.dmg ができる
+```
+
+「アプリを Applications へドラッグ」する画面付きの `.dmg` が生成されます。
+正式署名する場合は `CODESIGN_ID="Developer ID Application: 名前 (TEAMID)" ./make-dmg.sh`。
+
+### (2) GitHub Releases に置く（ダウンロードURLができる）
+
+1. GitHub のリポジトリ →「Releases」→「Draft a new release」
+2. タグ（例 `v1.0`）を付けて、作った `KoreanTranslator.dmg` を **そのままのファイル名で**添付
+3. Publish すると、固定URL `…/releases/latest/download/KoreanTranslator.dmg` で配れます
+
+### (3) ダウンロードページ（GitHub Pages）
+
+`docs/index.html` がダウンロードボタン付きの配布ページです。
+
+1. GitHub のリポジトリ →「Settings → Pages」
+2. 「Build and deployment」の Source を **Deploy from a branch**、ブランチを `main`、フォルダを **/docs** に設定
+3. 数分後に `https://kkohei.github.io/korean/` で公開されます
+   （ダウンロードボタンは上記 (2) の Release ファイルを指します）
+
+### (4) 受け取る人への案内
+
+`INSTALL.md` をそのまま渡せば、インストール〜APIキー設定まで案内できます。
+（未署名の場合は初回だけ「右クリック → 開く」が必要なことも書いてあります）
+
+---
+
+## 9. 費用について
 
 翻訳1回ごとに Claude API の利用料が発生します（テキストが短いので通常はごくわずか）。
 Web検索を有効にすると検索1回ごとにも少額の料金がかかります。詳しくは

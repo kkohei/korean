@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日韓翻訳 — ダウンロード</title>
+<style>
+  :root { --green: #39ff14; --green-dim: rgba(57,255,20,.55); --green-faint: rgba(57,255,20,.22); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: #0a0a0c;
+    background-image: radial-gradient(circle at 50% 0%, rgba(57,255,20,.08), transparent 60%);
+    color: var(--green);
+    font-family: "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 48px 20px 80px;
+  }
+  .icon { width: 132px; height: 132px; border-radius: 28px; box-shadow: 0 0 40px rgba(57,255,20,.25); }
+  h1 { font-size: 28px; margin: 24px 0 4px; letter-spacing: .04em; }
+  .sub { color: var(--green-dim); font-size: 14px; margin-bottom: 36px; text-align: center; }
+  .btn {
+    display: inline-block; text-decoration: none;
+    color: #07140a; background: var(--green); font-weight: 700;
+    padding: 16px 40px; border-radius: 10px; font-size: 17px;
+    box-shadow: 0 0 24px rgba(57,255,20,.45); transition: transform .1s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .hint { color: var(--green-dim); font-size: 12px; margin-top: 12px; }
+  .card {
+    width: 100%; max-width: 620px; margin-top: 44px;
+    border: 1px solid var(--green-faint); border-radius: 12px;
+    background: rgba(20,20,22,.55); backdrop-filter: blur(8px);
+    padding: 22px 26px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 14px; border-bottom: 1px solid var(--green-faint); padding-bottom: 10px; }
+  ol, ul { margin: 0; padding-left: 20px; line-height: 1.9; font-size: 13.5px; }
+  code { background: rgba(57,255,20,.1); padding: 2px 6px; border-radius: 4px; color: var(--green); }
+  .dots { position: absolute; }
+  footer { margin-top: 50px; color: var(--green-faint); font-size: 12px; }
+  a { color: var(--green); }
+</style>
+</head>
+<body>
+  <img class="icon" src="icon.png" alt="日韓翻訳アイコン">
+  <h1>日韓翻訳</h1>
+  <p class="sub">Mac のメニューバーに常駐する、日本語 ⇄ 韓国語の翻訳アプリ。<br>ネット検索で固有名詞まで正確に翻訳します。</p>
+
+  <a class="btn" href="https://github.com/kkohei/korean/releases/latest/download/KoreanTranslator.dmg">⬇ ダウンロード（.dmg）</a>
+  <p class="hint">macOS 13 (Ventura) 以降 / Apple Silicon・Intel 対応</p>
+
+  <div class="card">
+    <h2>インストール手順</h2>
+    <ol>
+      <li>ダウンロードした <code>KoreanTranslator.dmg</code> を開く</li>
+      <li>表示された <b>アプリのアイコンを「Applications」へドラッグ</b></li>
+      <li>「アプリケーション」フォルダから <b>日韓翻訳</b> を起動</li>
+      <li>初回に「開けません」と出たら、アプリを <b>右クリック → 開く</b> → ダイアログで <b>開く</b></li>
+      <li>メニューバーの <b>緑の「韓」</b> をクリック → ⚙設定で <b>Anthropic APIキー</b> を入力</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>APIキーの取得</h2>
+    <ul>
+      <li><a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> でサインアップ</li>
+      <li>Billing でクレジットを購入（最低 $5〜。1回の翻訳は数円程度）</li>
+      <li>「API keys → Create Key」で <code>sk-ant-...</code> を発行し、アプリの⚙設定に貼り付け</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>「開けません」がどうしても消えないとき</h2>
+    <p style="font-size:13.5px;line-height:1.8;margin:0;">ターミナルで次を実行してください：</p>
+    <p style="margin:10px 0 0;"><code>xattr -dr com.apple.quarantine /Applications/KoreanTranslator.app</code></p>
+  </div>
+
+  <footer>made with ❤ &nbsp;|&nbsp; <a href="https://github.com/kkohei/korean">GitHub</a></footer>
+</body>
+</html>
