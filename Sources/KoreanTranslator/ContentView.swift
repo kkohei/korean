@@ -16,8 +16,8 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // ターミナル風：背後ぼかし＋半透明グレーの重ね
-            VisualEffectBackground().ignoresSafeArea()
-            Color(white: 0.07).opacity(settings.backgroundOpacity).ignoresSafeArea()
+            VisualEffectBackground(light: settings.isLightBackground).ignoresSafeArea()
+            settings.backgroundColor.opacity(settings.backgroundOpacity).ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 10) {
                 header

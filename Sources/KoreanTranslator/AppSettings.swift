@@ -46,11 +46,26 @@ final class AppSettings: ObservableObject {
     @Published var textBrightness: Double {
         didSet { UserDefaults.standard.set(textBrightness, forKey: "textBrightness") }
     }
+    /// 背景色の色相（0〜1）
+    @Published var bgHue: Double {
+        didSet { UserDefaults.standard.set(bgHue, forKey: "bgHue") }
+    }
+    /// 背景色の彩度（0〜1）
+    @Published var bgSaturation: Double {
+        didSet { UserDefaults.standard.set(bgSaturation, forKey: "bgSaturation") }
+    }
+    /// 背景色の明度（0〜1）
+    @Published var bgBrightness: Double {
+        didSet { UserDefaults.standard.set(bgBrightness, forKey: "bgBrightness") }
+    }
 
-    // 蛍光グリーン #39FF14 の HSB 既定値
+    // 蛍光グリーン #39FF14 ＋ ダークグレー背景の HSB 既定値
     static let defaultHue = 0.307
     static let defaultSaturation = 0.92
     static let defaultBrightness = 1.0
+    static let defaultBgHue = 0.0
+    static let defaultBgSaturation = 0.0
+    static let defaultBgBrightness = 0.07
     static let defaultBackgroundOpacity = 0.55
 
     /// 選択可能なモデル一覧（表示名, モデルID）
@@ -74,6 +89,9 @@ final class AppSettings: ObservableObject {
         textHue = (d.object(forKey: "textHue") as? Double) ?? Self.defaultHue
         textSaturation = (d.object(forKey: "textSaturation") as? Double) ?? Self.defaultSaturation
         textBrightness = (d.object(forKey: "textBrightness") as? Double) ?? Self.defaultBrightness
+        bgHue = (d.object(forKey: "bgHue") as? Double) ?? Self.defaultBgHue
+        bgSaturation = (d.object(forKey: "bgSaturation") as? Double) ?? Self.defaultBgSaturation
+        bgBrightness = (d.object(forKey: "bgBrightness") as? Double) ?? Self.defaultBgBrightness
     }
 
     // MARK: - 外観の派生値
@@ -86,12 +104,23 @@ final class AppSettings: ObservableObject {
                 brightness: CGFloat(textBrightness), alpha: 1.0)
     }
 
-    func resetAppearance() {
-        textHue = Self.defaultHue
-        textSaturation = Self.defaultSaturation
-        textBrightness = Self.defaultBrightness
-        backgroundOpacity = Self.defaultBackgroundOpacity
+    var backgroundColor: Color {
+        Color(hue: bgHue, saturation: bgSaturation, brightness: bgBrightness)
     }
+    /// 背景が明るい配色か（ぼかし素材の明暗を切り替えるのに使う）
+    var isLightBackground: Bool { bgBrightness > 0.55 }
+
+    func apply(_ preset: ThemePreset) {
+        textHue = preset.textHue
+        textSaturation = preset.textSaturation
+        textBrightness = preset.textBrightness
+        bgHue = preset.bgHue
+        bgSaturation = preset.bgSaturation
+        bgBrightness = preset.bgBrightness
+        backgroundOpacity = preset.bgOpacity
+    }
+
+    func resetAppearance() { apply(ThemePreset.presets[0]) }
 
     /// 実際にAPIへ渡すWeb検索の最大回数（無効時は0）。
     var effectiveWebSearchUses: Int {
