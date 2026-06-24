@@ -1,0 +1,420 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
+<title>note貼り付け用</title>
+<style>
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;line-height:1.9;
+max-width:740px;margin:0 auto;padding:30px 20px;color:#222}
+h1{font-size:26px} h2{font-size:21px;border-bottom:2px solid #2faf5a;padding-bottom:6px;margin-top:36px}
+h3{font-size:17px;margin-top:24px}
+code{background:#eee;padding:2px 6px;border-radius:4px;font-size:90%}
+pre{background:#0d1117;color:#e6edf3;padding:14px;border-radius:8px;overflow:auto;font-size:13px}
+pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%} th,td{border:1px solid #ccc;padding:6px 10px;font-size:14px}
+blockquote{border-left:4px solid #2faf5a;margin:14px 0;padding:6px 14px;background:#f3faf5;color:#444}
+</style></head><body>
+<h1>「欲しい翻訳ツールがない」から、自分で作ってみた（制作〜リリース全記録）</h1>
+<blockquote>
+<p>個人開発を副業にしたい人へ。Macに常駐する小さな日↔韓翻訳アプリを、<strong>企画 → 技術選定 → 実装 → デザイン → 配布 → 収益化の設計</strong>まで、実際に手を動かした全工程を一本にまとめました。コードもコストも包み隠さず書きます。</p>
+<p>🖼【ここに画像を挿入】完成したアプリの実使用画面：デスクトップに溶け込む半透明の翻訳ウィンドウ
+<em>▲ 実際の使用画面。メニューバーから呼び出した小さな半透明ウィンドウが、作業の邪魔をせずデスクトップに常駐する。</em></p>
+</blockquote>
+<hr />
+<p><strong>「欲しい道具がないなら、作ればいい」</strong> ── そう言うのは簡単ですが、実際にやると“配る”ところで詰まります。
+この記事は、Macの常駐型 日↔韓 翻訳アプリを、<strong>企画から実装、署名・公証、配布、収益化の設計まで</strong>ひと通り通した実録です。
+コードが専門でない私が、AIとペアプロで<strong>どこまで・いくらで</strong>やれたのか、再現できる形で全部残します。</p>
+<hr />
+<h2>もくじ</h2>
+<ol>
+<li>要件定義 ── 「欲しい」を3つに絞る</li>
+<li>技術選定 ── なぜSwiftネイティブ × Claude APIなのか</li>
+<li>実装のキモ（コード付き）</li>
+<li>デザイン ── 毎日触りたくなる見た目をどう作るか</li>
+<li>リリースの壁 ── 「作る」より「配る」が本番</li>
+<li>コストと工数のリアル</li>
+<li>副業として見たときの戦略と、次の一手</li>
+<li>まとめ ── あなたが“小さく出す”ためのチェックリスト</li>
+</ol>
+<hr />
+<h2>1. 要件定義 ── 「欲しい」を3つに絞る</h2>
+<p>個人開発がいちばん死にやすいのは、<strong>「あれもこれも」と機能を盛って完成しないこと</strong>。だから最初にやったのは、機能を足すことではなく<strong>削ること</strong>でした。</p>
+<p>出発点は、自分の具体的な不満です。</p>
+<blockquote>
+<p>韓国語をやりとりするとき、毎回ブラウザの翻訳サイトを開くのが面倒。しかも機械翻訳は、固有名詞や流行語になると平気で外す。</p>
+</blockquote>
+<p>この不満を、<strong>機能要件</strong>と<strong>非機能要件</strong>に分けて言語化しました。</p>
+<p><strong>機能要件（やること）</strong>
+- 日本語を入力したら韓国語にする（逆方向も）
+- ただの直訳ではなく、<strong>固有名詞・専門用語をネットで確認して正確に</strong>訳す</p>
+<p><strong>非機能要件（体験の質）</strong>
+- <strong>常駐</strong>：いつでも1クリックで呼べる
+- <strong>小さい・邪魔にならない</strong>：作業画面を覆わない
+- <strong>軽い</strong>：常駐するので、メモリも起動も軽量に</p>
+<p>ここで大事なのは、「正確さ」という一点を<strong>差別化の軸</strong>に決めたこと。既製の翻訳アプリはたくさんありますが、「<strong>LLMにWeb検索させて文脈ごと正解を取りにいく</strong>」ものは少ない。勝てる土俵を1つ決めて、そこに全リソースを寄せました。</p>
+<blockquote>
+<p>💡 副業ポイント：機能の多さでは大手に勝てません。<strong>「自分が毎日困っている1点」</strong>に絞ると、完成するし、刺さる人には深く刺さります。</p>
+</blockquote>
+<hr />
+<h2>2. 技術選定 ── なぜSwiftネイティブ × Claude APIなのか</h2>
+<h3>2-1. フロントエンド：Electron / Tauri / SwiftUI</h3>
+<p>クロスプラットフォームの誘惑（Electron, Tauri）はありましたが、今回の要件は <strong>「macOSで、軽く常駐する」</strong>。マルチOS対応より、<strong>OSネイティブの作法</strong>が効きます。</p>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th>Electron</th>
+<th>Tauri</th>
+<th><strong>SwiftUI（採用）</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配布サイズ</td>
+<td>数百MB</td>
+<td>数十MB</td>
+<td><strong>数MB</strong></td>
+</tr>
+<tr>
+<td>メモリ</td>
+<td>重い</td>
+<td>中</td>
+<td><strong>軽い</strong></td>
+</tr>
+<tr>
+<td>メニューバー常駐</td>
+<td>可能（やや無理がある）</td>
+<td>可能</td>
+<td><strong>OS標準の作法</strong></td>
+</tr>
+<tr>
+<td>半透明/ブラー等のOS質感</td>
+<td>苦手</td>
+<td>中</td>
+<td><strong>得意（NSVisualEffectView）</strong></td>
+</tr>
+<tr>
+<td>学習コスト</td>
+<td>低</td>
+<td>中</td>
+<td>中（だがAIが補完）</td>
+</tr>
+</tbody>
+</table>
+<p>「常駐して気配を消す」を最優先したので、<strong>SwiftUI + AppKit</strong>に決めました。Swift未経験でも、後述のとおりAIとのペアプロでカバーできます。</p>
+<h3>2-2. 翻訳エンジン：専用翻訳API vs LLM＋Web検索</h3>
+<p>ここが企画の核。候補はこうでした。</p>
+<ul>
+<li><strong>Papago / DeepL / Google翻訳API</strong>：速い・自然。でも<strong>「今ネットでどう言われているか」までは見に行けない</strong></li>
+<li><strong>Claude API ＋ <code>web_search</code> ツール</strong>：必要に応じてLLMが<strong>自分でWeb検索</strong>して、その結果を踏まえて訳す</li>
+</ul>
+<p>決め手は具体例でした。</p>
+<blockquote>
+<p>「（新作映画のタイトル）が良かった」を訳すとき、機械翻訳はタイトルを直訳してしまう。でも本当に欲しいのは、<strong>韓国で実際に使われている公式タイトル表記</strong>。これは“検索してから訳す”でしか取れない。</p>
+</blockquote>
+<p>「正確さ」という差別化軸に直結するので、<strong>Claude API + Web検索</strong>を採用しました。速度や単純なコストでは専用APIに劣りますが、<strong>勝ちたい土俵で勝てる</strong>選択です。</p>
+<h3>2-3. モデルの選び方</h3>
+<p>Claudeにも複数のモデルがあります。アプリ内で切り替えられるようにしつつ、デフォルトを決めました。</p>
+<ul>
+<li><strong>Sonnet（デフォルト）</strong>：速さと品質のバランス。日常の翻訳はこれで十分</li>
+<li><strong>Opus</strong>：最高精度。固有名詞が多い・ニュアンスが命の長文向け</li>
+<li><strong>Haiku</strong>：最速・最安。とにかく軽く回したいとき</li>
+</ul>
+<blockquote>
+<p>💡 副業ポイント：<strong>「品質×速度×コスト」は1つに決めず、ユーザーに握らせる</strong>と、幅広い人の“ちょうどいい”に当たります。デフォルトだけは作者が責任を持って選ぶ。</p>
+</blockquote>
+<hr />
+<h2>3. 実装のキモ（コード付き）</h2>
+<p>ここから具体的に。全部は載せきれないので、<strong>“ここが効いた”勘所</strong>だけ抜き出します。</p>
+<h3>3-1. メニューバーに常駐し、Dockから消える</h3>
+<p>最初はSwiftUIの <code>MenuBarExtra</code> で作りました。が、これは<strong>メニューバーにぶら下がる小窓</strong>で、<strong>デスクトップの好きな場所に動かせない</strong>。要件と合わず、後で<strong><code>NSStatusItem</code> ＋ 自前ウィンドウ</strong>へ作り替えました（この“作り直し”も個人開発のリアルです）。</p>
+<p>Dockにアイコンを出さない「アクセサリアプリ」化は一行：</p>
+<pre><code class="language-swift">NSApp.setActivationPolicy(.accessory)   // Dockに出さず、メニューバー常駐に徹する
+</code></pre>
+<p>メニューバーの「韓」アイコンは <code>NSStatusItem</code> で出し、クリックでウィンドウを開閉します。</p>
+<pre><code class="language-swift">statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+statusItem.button?.attributedTitle = NSAttributedString(
+    string: &quot;韓&quot;,
+    attributes: [.foregroundColor: settings.textNSColor]  // 文字色は設定と連動
+)
+statusItem.button?.action = #selector(togglePanel)
+</code></pre>
+<h3>3-2. デスクトップを自由に動く、半透明ウィンドウ</h3>
+<p>要件の「小さい・邪魔にならない・好きな場所に置ける」を満たす中核。<code>NSPanel</code> を<strong>透過</strong>させ、<strong>位置を記憶</strong>させます。</p>
+<pre><code class="language-swift">let panel = NSPanel(
+    contentRect: NSRect(x: 0, y: 0, width: 360, height: 480),
+    styleMask: [.titled, .closable, .utilityWindow, .fullSizeContentView],
+    backing: .buffered, defer: false
+)
+panel.contentViewController = NSHostingController(rootView: ContentView())
+panel.isFloatingPanel = true                   // 他アプリの上に浮く
+panel.titlebarAppearsTransparent = true        // タイトルバーを溶かす
+panel.isOpaque = false
+panel.backgroundColor = .clear                 // 背景を透過（ここが半透明の肝）
+panel.isMovableByWindowBackground = true       // どこを掴んでも動かせる
+panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+panel.setFrameAutosaveName(&quot;KoreanTranslatorPanel&quot;)  // ★動かした位置を自動で記憶
+</code></pre>
+<p><code>setFrameAutosaveName</code> を入れるだけで、<strong>次に開いたとき前回の位置に出る</strong>。地味ですが「自分の道具」感を大きく左右します。</p>
+<h3>3-3. 翻訳の心臓部：Claudeに「検索しながら訳して」と頼む</h3>
+<p>肝は、リクエストに <strong><code>web_search</code> ツールを持たせる</strong>こと。これだけでLLMが必要に応じて検索し、結果を踏まえて訳します。しかも<strong>ツールの実行はAnthropic側で完結する</strong>ので、クライアントで「検索→結果を渡してもう一度呼ぶ」というループを書く必要がありません。1回叩けば、検索込みの最終回答が返ります。</p>
+<pre><code class="language-swift">var body: [String: Any] = [
+    &quot;model&quot;: model,                 // 例: claude-sonnet-4-6
+    &quot;max_tokens&quot;: 2048,
+    &quot;system&quot;: systemPrompt,
+    &quot;messages&quot;: [[&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: text]]
+]
+
+// ★差別化の核：Web検索ツールを付与
+body[&quot;tools&quot;] = [[
+    &quot;type&quot;: &quot;web_search_20250305&quot;,
+    &quot;name&quot;: &quot;web_search&quot;,
+    &quot;max_uses&quot;: webSearchUses        // 検索回数の上限＝コストの蛇口
+]]
+
+var req = URLRequest(url: URL(string: &quot;https://api.anthropic.com/v1/messages&quot;)!)
+req.httpMethod = &quot;POST&quot;
+req.setValue(&quot;application/json&quot;, forHTTPHeaderField: &quot;content-type&quot;)
+req.setValue(apiKey,            forHTTPHeaderField: &quot;x-api-key&quot;)
+req.setValue(&quot;2023-06-01&quot;,      forHTTPHeaderField: &quot;anthropic-version&quot;)
+req.httpBody = try JSONSerialization.data(withJSONObject: body)
+</code></pre>
+<p><strong>システムプロンプトの設計</strong>も品質を左右します。要点はこの3つ。</p>
+<ol>
+<li>役割を固定（「プロの日韓翻訳者として」）</li>
+<li><strong>検索を使う条件を明示</strong>（固有名詞・専門用語・流行語が来たら検索してから訳す）</li>
+<li><strong>出力フォーマットを固定</strong>（訳文と「補足メモ」を区切り文字で分離）</li>
+</ol>
+<p>返ってきた本文は、<code>text</code> ブロックだけを拾って、自前の区切り（<code>===NOTES===</code>）で訳文とメモに割っています。</p>
+<pre><code class="language-swift">let combined = content
+    .compactMap { ($0[&quot;type&quot;] as? String) == &quot;text&quot; ? $0[&quot;text&quot;] as? String : nil }
+    .joined()
+let parts = combined.components(separatedBy: &quot;===NOTES===&quot;)
+let korean = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+let notes  = parts.count &gt; 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : nil
+</code></pre>
+<blockquote>
+<p>🖼【ここに画像を挿入】翻訳実行後の画面：固有名詞Claudeを原綴りのまま正しく訳している
+<em>▲ 「このアプリはclaudeで作ったよ」→「이 앱은 Claude로 만들었어요」。固有名詞 "Claude" を韓国語にむりやり当て字せず、原綴りのまま残せるのがWeb検索併用の効果。</em></p>
+</blockquote>
+<h3>3-4. APIキーは Keychain に（後の配布設計に直結）</h3>
+<p>ユーザーのAPIキーは <code>UserDefaults</code> ではなく <strong>Keychain</strong> に保存。当然のセキュリティ対応ですが、これが後の「キーをアプリに含めない」配布設計と地続きになります。</p>
+<pre><code class="language-swift">let query: [String: Any] = [
+    kSecClass as String: kSecClassGenericPassword,
+    kSecAttrService as String: &quot;com.korean.translator&quot;,
+    kSecAttrAccount as String: &quot;anthropic-api-key&quot;,
+    kSecValueData as String: value.data(using: .utf8)!
+]
+SecItemDelete(query as CFDictionary)   // 既存を消してから
+SecItemAdd(query as CFDictionary, nil) // 入れ直す
+</code></pre>
+<h3>3-5. 双方向対応は「状態」で持つ</h3>
+<p>日→韓／韓→日は、<code>enum</code> の状態として持ち、UIラベル・プレースホルダー・システムプロンプトを切り替えるだけ。最後に使った向きは保存して、次回もそのまま。</p>
+<pre><code class="language-swift">enum TranslationDirection: String {
+    case jaToKo, koToJa
+    var toggled: TranslationDirection { self == .jaToKo ? .koToJa : .jaToKo }
+}
+</code></pre>
+<blockquote>
+<p>💡 つまずき：SwiftUIのmacOS対応は、iOSの感覚だと地味にハマります（<code>TextEditor</code> の背景を透過するのに <code>.scrollContentBackground(.hidden)</code> が要る、等）。こういう細かい“作法”は、<strong>AIに聞くと一発</strong>でした。</p>
+</blockquote>
+<hr />
+<h2>4. デザイン ── 毎日触りたくなる見た目をどう作るか</h2>
+<p>機能が同じでも、<strong>触りたくなる見た目かどうか</strong>で継続率は変わります。継続率は、個人開発プロダクトの“生存率”そのものです。</p>
+<p>最初のテーマは<strong>ターミナル風</strong>。黒地に蛍光グリーンの等幅フォント。背景は <code>NSVisualEffectView</code> で後ろをぼかし、その上に半透明色を重ねています。</p>
+<pre><code class="language-swift">struct VisualEffectBackground: NSViewRepresentable {
+    var light: Bool = false
+    func makeNSView(context: Context) -&gt; NSVisualEffectView { NSVisualEffectView() }
+    func updateNSView(_ v: NSVisualEffectView, context: Context) {
+        v.blendingMode = .behindWindow
+        v.state = .active
+        v.material = light ? .popover : .hudWindow      // 明るいテーマでは素材も切替
+        v.appearance = NSAppearance(named: light ? .aqua : .darkAqua)
+    }
+}
+</code></pre>
+<blockquote>
+<p>🖼【ここに画像を挿入】半透明ウィンドウが壁紙に馴染んでいる様子
+<em>▲ 背景をぼかし、その上に半透明の色を重ねている。壁紙に溶け込み“常駐していても気にならない”を実現。</em></p>
+</blockquote>
+<p>さらに、<strong>色は数値で持たせて即反映</strong>できるようにしました。</p>
+<ul>
+<li>文字色・背景色を <strong>HSB（色相・彩度・明度）スライダー</strong>で微調整</li>
+<li><strong>配色プリセット</strong>をワンタップ（ターミナル緑のほか、ローズゴールド×ベージュ／サクラ／ラベンダー／シャンパン／モノクロ）</li>
+</ul>
+<pre><code class="language-swift">var textColor: Color {
+    Color(hue: textHue, saturation: textSaturation, brightness: textBrightness)
+}
+</code></pre>
+<p>“緑のターミナル”は好みが分かれます。<strong>色を選べる</strong>ようにした瞬間に、刺さる相手が一気に広がりました。見た目のカスタマイズは、自己満足ではなく<strong>ユーザー層を広げる施策</strong>です。</p>
+<blockquote>
+<p>💡 副業ポイント：<strong>「機能の差別化」だけでなく「気分の差別化」</strong>も効きます。同じ翻訳でも、自分の好きな色で出てくる道具は、つい使いたくなる。</p>
+</blockquote>
+<hr />
+<h2>5. リリースの壁 ── 「作る」より「配る」が本番</h2>
+<p>個人開発の挫折はだいたい<strong>ここ</strong>で起きます。動くものができても、人に渡せる形にするまでに段差がいくつもある。順に潰しました。</p>
+<h3>5-1. <code>.app</code> バンドルを組み立てる</h3>
+<p>SwiftのビルドだけではMacアプリになりません。<code>.app</code> という決まった<strong>フォルダ構造</strong>に、実行ファイル・<code>Info.plist</code>・アイコンを詰めます。</p>
+<ul>
+<li><code>Info.plist</code> に <code>LSUIElement = true</code> を入れて<strong>Dockに出さない</strong></li>
+<li>アイコンは <code>.iconset</code>（複数サイズのPNG）を <code>iconutil</code> で <code>.icns</code> に変換して同梱</li>
+</ul>
+<pre><code class="language-bash">swift build -c release
+iconutil -c icns AppIcon.iconset -o KoreanTranslator.app/Contents/Resources/AppIcon.icns
+</code></pre>
+<h3>5-2. Gatekeeper ── Mac配布、最大の関門</h3>
+<p>ここがMac特有の壁。<strong>署名していないアプリは、初回に「開発元を確認できないため開けません」</strong>と弾かれます。レベルは2段階。</p>
+<ul>
+<li><strong>自分・知人向け</strong>：アドホック署名でOK（受け取った人は初回だけ「右クリック→開く」）</li>
+<li><strong>不特定多数向け</strong>：<strong>Apple Developer Program（年99 USD）</strong>の証明書で署名し、<strong>公証（Notarization）</strong>を通すと、警告なしで開けるようになる</li>
+</ul>
+<pre><code class="language-bash"># Developer ID で署名（hardened runtime 付き）
+codesign --force --deep --options runtime --timestamp --sign &quot;$CODESIGN_ID&quot; KoreanTranslator.app
+
+# 公証に提出 → 通ったらチケットをアプリに貼る
+xcrun notarytool submit KoreanTranslator.zip \
+  --apple-id &quot;...&quot; --team-id &quot;TEAMID&quot; --password &quot;App用パスワード&quot; --wait
+xcrun stapler staple KoreanTranslator.app
+</code></pre>
+<p>どうしても弾かれる人向けに、最終手段の隔離属性削除もドキュメント化しておくと親切です。</p>
+<pre><code class="language-bash">xattr -dr com.apple.quarantine /Applications/KoreanTranslator.app
+</code></pre>
+<h3>5-3. <code>.dmg</code> にまとめる</h3>
+<p><code>.zip</code> でも配れますが、<strong>ドラッグでApplicationsに入れる画面</strong>が出る <code>.dmg</code> のほうが圧倒的に親切。<code>hdiutil</code> で作れます。<code>Applications</code> へのシンボリックリンクを同梱して、“ドラッグ＆ドロップでインストール”の見た目にします。</p>
+<pre><code class="language-bash">ln -s /Applications staging/Applications
+hdiutil create -volname &quot;日韓翻訳&quot; -srcfolder staging -ov -format UDZO KoreanTranslator.dmg
+</code></pre>
+<h3>5-4. ホスティングは GitHub で完全無料</h3>
+<p>サーバー代ゼロで配れます。</p>
+<ul>
+<li><strong>GitHub Releases</strong> に <code>.dmg</code> を上げると、<code>…/releases/latest/download/KoreanTranslator.dmg</code> という<strong>固定の最新DLリンク</strong>が手に入る</li>
+<li><strong>GitHub Pages</strong>（リポジトリの <code>docs/</code>）に、ダウンロードボタン付きのページを置く</li>
+</ul>
+<p>ダウンロードページもアプリと同じターミナル風で作ると、世界観が一貫してブランドになります。</p>
+<h3>5-5. 最重要：「APIキー問題」をどう設計するか＝収益化の分岐点</h3>
+<p>このアプリは動作に<strong>ユーザーのClaude APIキー</strong>が要ります。AI系アプリを配るなら必ずぶつかる論点で、ここが<strong>収益化モデルそのもの</strong>になります。</p>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>ユーザー体験</th>
+<th>課金</th>
+<th>評価</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. BYOK（各自が自分のキー）</strong></td>
+<td>キー取得が必要</td>
+<td>各自負担</td>
+<td><strong>無料で配れる・赤字リスクなし</strong>。今回採用</td>
+</tr>
+<tr>
+<td>B. 作者のキーを埋め込む</td>
+<td>楽</td>
+<td>全部作者</td>
+<td><strong>NG</strong>（バイナリから抜かれる・乱用・最悪BAN）</td>
+</tr>
+<tr>
+<td>C. 中継サーバー＋サブスク</td>
+<td>楽（キー不要）</td>
+<td>作者が管理</td>
+<td><strong>収益化向き</strong>（が、実装と運用が必要）</td>
+</tr>
+</tbody>
+</table>
+<p>今回は<strong>赤字を出さない</strong>ことを最優先し、<strong>A（BYOK）</strong>を採用。代わりに、非エンジニアでも詰まらないよう<strong>インストール〜キー取得〜FAQまでの説明書を <code>.dmg</code> に同梱</strong>しました（受け取った人がdmgを開くと、アプリと並んで「はじめにお読みください」が入っている）。</p>
+<p><strong>Cにするとどうなるか</strong>も設計だけ描いておきます。</p>
+<pre><code>[アプリ] ──(合言葉/ライセンスキー)──▶ [あなたの中継サーバー(Cloudflare Workers等)]
+                                          │ ここにAnthropicキーを隠し持つ
+                                          ▼
+                                     [Anthropic API]
+</code></pre>
+<p>Cの利点は、<strong>「キー不要でそのまま使える」体験を売れる</strong>こと。これは月額サブスクと非常に相性が良い。一方で、<strong>サーバー運用・課金・不正利用対策</strong>という“事業の責任”が発生します。</p>
+<blockquote>
+<p>💡 副業の現実解：<strong>まずAで無料配布して反応を見る → 手応えがあればCに作り替えてサブスク化</strong>。最初から事業を背負わず、検証を挟むのが安全です。</p>
+</blockquote>
+<hr />
+<h2>6. コストと工数のリアル</h2>
+<h3>6-1. お金</h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>費用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>開発ツール（Xcode／AIペアプロ）</td>
+<td><strong>0円</strong></td>
+</tr>
+<tr>
+<td>ホスティング（Releases／Pages）</td>
+<td><strong>0円</strong></td>
+</tr>
+<tr>
+<td>配布で警告を消す（任意）</td>
+<td>Apple Developer <strong>約99 USD/年</strong></td>
+</tr>
+<tr>
+<td>実行時のAI利用料</td>
+<td><strong>従量</strong>（BYOKなのでユーザー負担）</td>
+</tr>
+</tbody>
+</table>
+<p>1回の翻訳は短いテキストなので、利用料は<strong>数円以下</strong>。Web検索を使っても、検索回数の上限（<code>max_uses</code>）で蛇口を絞れます。つまり——</p>
+<ul>
+<li><strong>自分と知人に配るだけなら、実質0円</strong></li>
+<li><strong>一般配布で警告を消すなら、年1万数千円から</strong></li>
+</ul>
+<p>「赤字が怖くて踏み出せない」を、構造的に回避できます。</p>
+<h3>6-2. 時間と、AIペアプロの効き目</h3>
+<p>正直に言うと、私はSwift/AppKitの専門家ではありません。それでも要件→実装→配布まで到達できたのは、<strong>AI（Claude Code）とのペアプロ</strong>が大きい。具体的にどこが速くなったか：</p>
+<ul>
+<li><strong>OSの細かい作法</strong>：<code>NSPanel</code> の透過、Keychain、署名フロー、<code>scrollContentBackground</code> ……毎回ググる時間がほぼ消えた</li>
+<li><strong>作り直しが怖くない</strong>：MenuBarExtra → NSStatusItem の作り替えのような“方針転換”を、低コストで試せる</li>
+<li><strong>配布の知識</strong>：notarization や hdiutil など、<strong>普段書かない領域</strong>の手順を即座に手元化できた</li>
+</ul>
+<blockquote>
+<p>「コードが書けるか」より、<strong>「やりたいことを言語化できるか」</strong>が効く時代になった、というのが実感です。</p>
+</blockquote>
+<hr />
+<h2>7. 副業として見たときの戦略と、次の一手</h2>
+<p>工程を振り返って、副業・個人開発の観点での学びを4つ。</p>
+<ol>
+<li><strong>企画＝自分の不満の解像度</strong>。汎用ツールより「自分が毎日使う1機能」のほうが完成するし、刺さる</li>
+<li><strong>差別化は“組み合わせ”で作る</strong>。翻訳 × Web検索のように、既存技術の掛け算で十分に新しい</li>
+<li><strong>配布・署名・説明・デザインが最後の山</strong>。ここを越えられる人が「作れる人」になる</li>
+<li><strong>収益化はキー設計とセット</strong>。BYOKで無料配布 → 検証 → C（中継＋サブスク）でマネタイズ、という段階戦略</li>
+</ol>
+<p>次にやろうとしているのは、</p>
+<ul>
+<li><strong>グローバルホットキー</strong>：どのアプリからでも一瞬で呼び出す（常駐ツールの体験が跳ね上がる）</li>
+<li><strong>選択テキストの即翻訳</strong>：他アプリで選んだ文字をホットキーでそのまま翻訳</li>
+<li><strong>Cモデルの検証</strong>：キー不要のサブスク版を、まず小さく試す</li>
+</ul>
+<hr />
+<h2>8. まとめ ── あなたが“小さく出す”ためのチェックリスト</h2>
+<p>最後に、この記事の工程を<strong>再現可能なチェックリスト</strong>にしておきます。</p>
+<ul>
+<li>[ ] 自分の<strong>具体的な不満</strong>を1つ選ぶ（汎用化しない）</li>
+<li>[ ] 機能を<strong>3つ以内</strong>に絞る（差別化の軸を1つ決める）</li>
+<li>[ ] OSネイティブか、クロスプラットフォームか、<strong>要件から</strong>選ぶ</li>
+<li>[ ] まず<strong>動くMVP</strong>を出す（見た目は後）</li>
+<li>[ ] <strong>配布の壁</strong>（署名・公証・dmg・ホスティング）を早めに一度通しておく</li>
+<li>[ ] <strong>APIキー／課金の設計</strong>を決める（BYOKで無料検証 → 伸びたらサブスク）</li>
+<li>[ ] 受け取る人向けの<strong>説明書</strong>を同梱する</li>
+<li>[ ] まず<strong>無料で出して、反応を見る</strong></li>
+</ul>
+<p>「欲しいツールがない」は、副業の最高の出発点です。
+同じように一歩を踏み出す人の役に立てば嬉しいです🙂</p>
+<hr />
+<h3>技術スタックまとめ</h3>
+<ul>
+<li><strong>言語/UI</strong>：Swift / SwiftUI + AppKit（<code>MenuBarExtra</code>→<code>NSStatusItem</code>＋<code>NSPanel</code>）</li>
+<li><strong>翻訳</strong>：Claude API（Messages API）＋ <code>web_search</code> ツール</li>
+<li><strong>保存</strong>：Keychain（APIキー）／UserDefaults（設定）</li>
+<li><strong>配布</strong>：<code>.app</code>＋<code>iconutil</code>＋<code>codesign</code>／<code>hdiutil</code>（dmg）／GitHub Releases＋Pages</li>
+<li><strong>開発スタイル</strong>：AI（Claude Code）とのペアプログラミング</li>
+</ul>
+<hr />
+<h1>個人開発 #副業 #プログラミング #Swift #SwiftUI #Mac #Macアプリ #AI #Claude #個人開発で稼ぐ #ものづくり #エンジニア #駆け出しエンジニア #アプリ開発</h1>
+</body></html>
