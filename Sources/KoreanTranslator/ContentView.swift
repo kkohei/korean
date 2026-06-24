@@ -42,9 +42,19 @@ struct ContentView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack {
-            Text("日本語 → 한국어")
+        HStack(spacing: 8) {
+            Text(settings.direction.headerText)
                 .font(Theme.mono(13, weight: .bold))
+            Button {
+                settings.direction = settings.direction.toggled
+                result = nil
+                errorMessage = nil
+            } label: {
+                Image(systemName: "arrow.left.arrow.right")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(Theme.phosphor)
+            .help("翻訳方向を入れ替え")
             Spacer()
             Button {
                 showSettings = true
@@ -69,7 +79,7 @@ struct ContentView: View {
                 .scrollContentBackground(.hidden)
                 .padding(6)
             if input.isEmpty {
-                Text("> 翻訳したい日本語を入力…")
+                Text(settings.direction.inputPlaceholder)
                     .foregroundStyle(Theme.phosphorDim)
                     .font(Theme.mono(14))
                     .padding(.horizontal, 11)
@@ -168,7 +178,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(Theme.phosphor)
-                .help("韓国語をコピー")
+                .help(settings.direction.copyHelp)
             }
 
             if let notes = result.notes {
@@ -235,7 +245,8 @@ struct ContentView: View {
         Task {
             do {
                 let r = try await service.translate(
-                    japanese: text,
+                    text: text,
+                    direction: settings.direction,
                     apiKey: settings.apiKey,
                     model: settings.model,
                     webSearchUses: settings.effectiveWebSearchUses

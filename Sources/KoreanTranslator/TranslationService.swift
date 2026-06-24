@@ -1,5 +1,21 @@
 import Foundation
 
+/// 翻訳の方向。
+enum TranslationDirection: String {
+    case jaToKo   // 日本語 → 韓国語
+    case koToJa   // 韓国語 → 日本語
+
+    var sourceLabel: String { self == .jaToKo ? "日本語" : "한국어" }
+    var targetLabel: String { self == .jaToKo ? "한국어" : "日本語" }
+    var headerText: String { "\(sourceLabel) → \(targetLabel)" }
+
+    var inputPlaceholder: String {
+        self == .jaToKo ? "> 翻訳したい日本語を入力…" : "> 번역할 한국어를 입력…"
+    }
+    var copyHelp: String { self == .jaToKo ? "韓国語をコピー" : "日本語をコピー" }
+    var toggled: TranslationDirection { self == .jaToKo ? .koToJa : .jaToKo }
+}
+
 struct TranslationResult {
     /// 韓国語訳本文
     let korean: String
@@ -38,20 +54,39 @@ struct TranslationService {
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
 
-    private let systemPrompt = """
-    あなたは日本語から韓国語へのプロの翻訳者です。ユーザーが入力した日本語を、自然で正確な韓国語に翻訳してください。
+    private func systemPrompt(for direction: TranslationDirection) -> String {
+        switch direction {
+        case .jaToKo:
+            return """
+            あなたは日本語から韓国語へのプロの翻訳者です。ユーザーが入力した日本語を、自然で正確な韓国語に翻訳してください。
 
-    重要なルール:
-    - 固有名詞（人名・地名・会社名・商品名・作品名・専門用語・流行語・時事的表現など）が含まれる場合は、web_search ツールで実際の韓国語表記・現地での一般的な言い回しを確認してから訳すこと。推測で当て字にしない。
-    - 文脈・敬語レベル・口調をできるだけ保つこと。
-    - 余計な前置きや解説を出力に含めない。
+            重要なルール:
+            - 固有名詞（人名・地名・会社名・商品名・作品名・専門用語・流行語・時事的表現など）が含まれる場合は、web_search ツールで実際の韓国語表記・現地での一般的な言い回しを確認してから訳すこと。推測で当て字にしない。
+            - 文脈・敬語レベル・口調をできるだけ保つこと。
+            - 余計な前置きや解説を出力に含めない。
 
-    出力フォーマット（厳守）:
-    1行目以降に韓国語訳のみを書く。
-    補足が必要な場合（固有名詞の根拠、表記の選択理由など）のみ、訳の後に独立した1行 `===NOTES===` を置き、その下に日本語で簡潔にメモを書く。補足が不要なら `===NOTES===` 自体を書かない。
-    """
+            出力フォーマット（厳守）:
+            1行目以降に韓国語訳のみを書く。
+            補足が必要な場合（固有名詞の根拠、表記の選択理由など）のみ、訳の後に独立した1行 `===NOTES===` を置き、その下に日本語で簡潔にメモを書く。補足が不要なら `===NOTES===` 自体を書かない。
+            """
+        case .koToJa:
+            return """
+            あなたは韓国語から日本語へのプロの翻訳者です。ユーザーが入力した韓国語を、自然で正確な日本語に翻訳してください。
 
-    func translate(japanese: String,
+            重要なルール:
+            - 固有名詞（人名・地名・会社名・商品名・作品名・専門用語・流行語・時事的表現など）が含まれる場合は、web_search ツールで実際の日本語表記・日本での一般的な言い回しを確認してから訳すこと。推測で当て字にしない。
+            - 文脈・敬語レベル・口調をできるだけ保つこと。
+            - 余計な前置きや解説を出力に含めない。
+
+            出力フォーマット（厳守）:
+            1行目以降に日本語訳のみを書く。
+            補足が必要な場合（固有名詞の根拠、表記の選択理由など）のみ、訳の後に独立した1行 `===NOTES===` を置き、その下に日本語で簡潔にメモを書く。補足が不要なら `===NOTES===` 自体を書かない。
+            """
+        }
+    }
+
+    func translate(text rawText: String,
+                   direction: TranslationDirection,
                    apiKey: String,
                    model: String,
                    webSearchUses: Int) async throws -> TranslationResult {
@@ -59,13 +94,13 @@ struct TranslationService {
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else { throw TranslationError.missingAPIKey }
 
-        let text = japanese.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw TranslationError.emptyInput }
 
         var body: [String: Any] = [
             "model": model,
             "max_tokens": 2048,
-            "system": systemPrompt,
+            "system": systemPrompt(for: direction),
             "messages": [
                 ["role": "user", "content": text]
             ]
