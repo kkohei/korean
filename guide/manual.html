@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日韓翻訳 — はじめにお読みください</title>
+<style>
+  :root { --g:#2faf5a; --g-d:#1f8f47; --ink:#22262b; --mut:#6b727a; --line:#e7e9ec; --bg:#f6f8f7; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.8; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 22px 80px; }
+  header { text-align: center; margin-bottom: 36px; }
+  .badge {
+    width: 88px; height: 88px; border-radius: 20px; margin: 0 auto 16px;
+    background: #0e0e10; color: #39ff14; display: flex; align-items: center; justify-content: center;
+    font-size: 46px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .lead { color: var(--mut); font-size: 15px; margin: 0; }
+  h2 {
+    font-size: 19px; margin: 40px 0 14px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--g); display: inline-block;
+  }
+  .step {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px 16px 56px; margin: 12px 0; position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .step .n {
+    position: absolute; left: 14px; top: 16px; width: 28px; height: 28px;
+    background: var(--g); color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
+  }
+  .step b { color: var(--g-d); }
+  .note {
+    background: #eefaf1; border-left: 4px solid var(--g); border-radius: 6px;
+    padding: 12px 16px; margin: 14px 0; font-size: 14px;
+  }
+  .warn {
+    background: #fff7e6; border-left: 4px solid #e6a23c; border-radius: 6px;
+    padding: 12px 16px; margin: 14px 0; font-size: 14px;
+  }
+  code {
+    background: #eceef0; padding: 2px 7px; border-radius: 5px;
+    font-family: Menlo, Consolas, monospace; font-size: 13px;
+  }
+  .url { font-weight: 700; color: var(--g-d); word-break: break-all; }
+  .faq { margin: 10px 0; }
+  .faq summary { cursor: pointer; font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .faq p { color: var(--mut); font-size: 14px; }
+  footer { text-align: center; color: var(--mut); font-size: 13px; margin-top: 50px; }
+  .kbd { background:#fff; border:1px solid #c9ced3; border-bottom-width:2px; border-radius:5px; padding:1px 7px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="badge">韓</div>
+    <h1>日韓翻訳 へようこそ</h1>
+    <p class="lead">Mac のメニューバーに常駐する、日本語 ⇄ 韓国語の翻訳アプリです。<br>使い始めるまで、ゆっくり3ステップで案内します 🙂</p>
+  </header>
+
+  <h2>STEP 1 ── アプリを入れる</h2>
+  <div class="step"><span class="n">1</span>受け取った <code>KoreanTranslator.dmg</code> をダブルクリックで開きます。</div>
+  <div class="step"><span class="n">2</span>出てきた <b>アプリのアイコンを「Applications」フォルダへドラッグ</b>します。</div>
+  <div class="step"><span class="n">3</span>「アプリケーション」フォルダから <b>日韓翻訳</b> をダブルクリックで起動します。</div>
+  <div class="warn">
+    ⚠️ 初回に「<b>開発元を確認できないため開けません</b>」と出たら——<br>
+    アプリのアイコンを <b>右クリック → 「開く」</b> → 出てきた小窓でもう一度 <b>「開く」</b> を押してください。これは最初の1回だけです。
+  </div>
+  <div class="note">起動すると、画面いちばん上のメニューバーに <b>緑の「韓」</b> マークが出ます。これがアプリです。クリックすると小さなウィンドウが開きます。</div>
+
+  <h2>STEP 2 ── 「APIキー」を用意する（最初の1回だけ）</h2>
+  <p>このアプリは、賢いAI（Anthropic の Claude）を使って翻訳します。そのため、<b>あなた専用の「APIキー」</b>という鍵が1つ必要です。下の手順で取得します（5分ほど）。</p>
+
+  <div class="step"><span class="n">1</span>ブラウザで <span class="url">https://console.anthropic.com</span> を開きます。</div>
+  <div class="step"><span class="n">2</span><b>Sign up</b> からアカウントを作成します（<b>「Continue with Google」</b>を使うと、お持ちのGoogleアカウントで一瞬で登録できて簡単です）。</div>
+  <div class="step"><span class="n">3</span>左メニューの <b>「Billing」（お支払い）</b> を開き、<b>「Add payment method」</b>でクレジットカードを登録します。</div>
+  <div class="step"><span class="n">4</span>つづけて <b>クレジットを購入</b>します（最低 <b>5ドル</b> から。これが翻訳の利用料になります。後述のとおり、ふつうの使い方なら数か月もちます）。</div>
+  <div class="step"><span class="n">5</span>左メニューの <b>「API keys」</b> を開き、<b>「Create Key」</b> をクリック。名前は自由（例：<code>korean</code>）でOK。<b>「Create」</b>を押します。</div>
+  <div class="step"><span class="n">6</span><b><code>sk-ant-</code> で始まる長い文字列</b>が表示されます。これがあなたのキーです。<b>「Copy」ボタンでコピー</b>してください。</div>
+  <div class="warn">⚠️ このキーは <b>この画面でしか表示されません</b>（閉じると二度と見られません）。必ずこの場でコピーして、次のSTEP 3まで進んでください。万一コピーし忘れても、また新しく作り直せば大丈夫です。</div>
+
+  <h2>STEP 3 ── アプリにキーを貼り付ける</h2>
+  <div class="step"><span class="n">1</span>メニューバーの <b>緑の「韓」</b> をクリックしてウィンドウを開きます。</div>
+  <div class="step"><span class="n">2</span>右上の <b>⚙（歯車）</b> を押して設定を開きます。</div>
+  <div class="step"><span class="n">3</span>「Anthropic APIキー」の欄に、さきほどコピーした <code>sk-ant-...</code> を <b>貼り付け</b>（<span class="kbd">⌘</span>+<span class="kbd">V</span>）して、<b>「保存」</b>を押します。</div>
+  <div class="note">✅ これで準備完了！ 設定を閉じて、日本語を入力し <span class="kbd">⌘</span>+<span class="kbd">Return（改行キー）</span> を押すと、韓国語に翻訳されます。</div>
+
+  <h2>基本の使い方</h2>
+  <div class="step" style="padding-left:18px"><b>翻訳する：</b>文章を入力 →「翻訳」ボタン、または <span class="kbd">⌘</span>+<span class="kbd">Return</span></div>
+  <div class="step" style="padding-left:18px"><b>向きを変える：</b>上部の <b>⇄</b> で「日本語→韓国語」と「韓国語→日本語」を切り替え</div>
+  <div class="step" style="padding-left:18px"><b>貼り付けて翻訳：</b>「貼り付け」ボタンで、コピー済みの文をそのまま取り込み</div>
+  <div class="step" style="padding-left:18px"><b>動かす：</b>ウィンドウはデスクトップの好きな場所へドラッグできます。📌 で最前面に固定も可能</div>
+  <div class="step" style="padding-left:18px"><b>見た目を変える：</b>⚙設定の「外観」で、配色（ローズゴールド／サクラ等）や文字色を変更できます</div>
+
+  <h2>よくある質問</h2>
+  <details class="faq"><summary>Q. お金はどれくらいかかりますか？</summary>
+    <p>翻訳1回ごとに、ほんのわずか（数円以下）の利用料がかかります。最初に購入した5ドル分のクレジットから少しずつ引かれていきます。毎日そこそこ使っても、ふつうは数か月もちます。残高は console.anthropic.com の「Billing」でいつでも確認できます。</p></details>
+  <details class="faq"><summary>Q. キーは安全ですか？ 誰かに見られませんか？</summary>
+    <p>入力したキーは、あなたのMacの中の「キーチェーン」という安全な金庫に保存されます。アプリの作者や他人には送られません（翻訳のときに Anthropic にだけ送られます）。</p></details>
+  <details class="faq"><summary>Q. キーをコピーし忘れました／無くしました。</summary>
+    <p>大丈夫です。console.anthropic.com の「API keys」で、古いキーを削除して新しく「Create Key」すれば、また使えます。新しいキーをアプリの⚙設定に貼り直してください。</p></details>
+  <details class="faq"><summary>Q. このアプリは作者のキーを使っているの？</summary>
+    <p>いいえ。アプリの中にキーは入っていません。利用料は<b>あなた自身のアカウント</b>に対してかかり、作者には請求されません（その逆も同じです）。</p></details>
+  <details class="faq"><summary>Q. 翻訳が出ず「APIエラー」と出ます。</summary>
+    <p>多くは「キーが正しく貼られていない」か「クレジット残高が切れている」です。⚙設定でキーを入れ直す、または Billing で残高を確認してください。</p></details>
+
+  <footer>困ったときは、このアプリを渡してくれた人に聞いてみてください 🙌</footer>
+</div>
+</body>
+</html>

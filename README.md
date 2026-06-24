@@ -136,7 +136,8 @@ xattr -dr com.apple.quarantine KoreanTranslator.app
 | `build.sh` | `.app` バンドルの生成・アイコン埋め込み・署名 |
 | `make-dmg.sh` | 配布用 `.dmg` の作成 |
 | `docs/index.html` | GitHub Pages 用ダウンロードページ |
-| `INSTALL.md` | 配布先の人向けインストール手順 |
+| `INSTALL.md` | 配布先の人向けインストール手順（テキスト版） |
+| `guide/manual.html` | 配布先の人向けの説明書（DMGに自動同梱・ブラウザで開く） |
 
 ---
 
@@ -166,10 +167,12 @@ xattr -dr com.apple.quarantine KoreanTranslator.app
 3. 数分後に `https://kkohei.github.io/korean/` で公開されます
    （ダウンロードボタンは上記 (2) の Release ファイルを指します）
 
-### (4) 受け取る人への案内
+### (4) 受け取る人への案内（説明書を同梱）
 
-`INSTALL.md` をそのまま渡せば、インストール〜APIキー設定まで案内できます。
-（未署名の場合は初回だけ「右クリック → 開く」が必要なことも書いてあります）
+`./make-dmg.sh` で作る `.dmg` には、初心者向けの説明書 **「はじめにお読みください.html」**（`guide/manual.html`）が自動で同梱されます。
+受け取った人が dmg を開くと、アプリと一緒にこの説明書が入っているので、**ダブルクリックすればブラウザで開いて**、インストール〜APIキー取得〜使い方まで順番に読めます。
+
+> APIキーは各自が自分のものを取得して使う方式です（あなたのキーは含まれず、課金も各自）。説明書にその旨と取得手順を丁寧に書いてあります。
 
 ---
 
