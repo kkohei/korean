@@ -29,8 +29,8 @@ cp -R "${APP}" "${STAGING}/"
 # 「Applicationsへドラッグ」用のショートカット
 ln -s /Applications "${STAGING}/Applications"
 # 使い方の説明書を同梱（ダブルクリックでブラウザが開く）
-if [ -f "guide/manual.html" ]; then
-    cp "guide/manual.html" "${STAGING}/はじめにお読みください.html"
+if [ -f "../guide/manual.html" ]; then
+    cp "../guide/manual.html" "${STAGING}/はじめにお読みください.html"
 fi
 
 hdiutil create -volname "${VOL_NAME}" \

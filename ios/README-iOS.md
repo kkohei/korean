@@ -34,7 +34,7 @@ Mac版と**翻訳エンジンを共有**したiPhoneアプリです。マイク�
 - `MobileSettings.swift`
 - `SpeechRecognizer.swift`
 
-**Mac版と共有（`Sources/KoreanTranslator/` フォルダ）**
+**Mac版と共有（`macos/Sources/KoreanTranslator/` フォルダ）**
 - `TranslationService.swift` ← 翻訳の中核（Web検索つきClaude API）
 - `Keychain.swift` ← APIキーの安全保存
 
