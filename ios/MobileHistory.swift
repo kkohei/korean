@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 /// 翻訳1件分の履歴。端末内（UserDefaults）に JSON で保存する。
 struct HistoryItem: Identifiable, Codable, Equatable {
