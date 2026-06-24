@@ -2,13 +2,16 @@ import SwiftUI
 
 struct MobileContentView: View {
     @EnvironmentObject var settings: MobileSettings
+    @EnvironmentObject var history: HistoryStore
     @StateObject private var speech = SpeechRecognizer()
+    @StateObject private var speaker = SpeechSynthesizer()
 
     @State private var input = ""
     @State private var result: TranslationResult?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showSettings = false
+    @State private var showHistory = false
     @State private var copied = false
     @State private var pulse = false
 
@@ -29,12 +32,20 @@ struct MobileContentView: View {
             .navigationTitle("日韓ほんやく")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showHistory = true } label: { Image(systemName: "clock.arrow.circlepath") }
+                        .accessibilityLabel("翻訳履歴")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showSettings = true } label: { Image(systemName: "gearshape") }
                 }
             }
             .sheet(isPresented: $showSettings) {
                 MobileSettingsView().environmentObject(settings)
+            }
+            .sheet(isPresented: $showHistory) {
+                MobileHistoryView { item in applyHistory(item) }
+                    .environmentObject(history)
             }
             .tint(Brand.green)
             // 音声認識の途中経過を入力欄へ反映
@@ -56,6 +67,7 @@ struct MobileContentView: View {
                 settings.direction = settings.direction.toggled
                 result = nil; errorMessage = nil
                 if speech.isRecording { speech.stop() }
+                speaker.stop()
             } label: {
                 Image(systemName: "arrow.left.arrow.right.circle.fill").font(.title2)
             }
@@ -88,6 +100,7 @@ struct MobileContentView: View {
     private var micButton: some View {
         Button {
             errorMessage = nil
+            speaker.stop()
             speech.toggle(direction: settings.direction)
         } label: {
             ZStack {
@@ -143,10 +156,16 @@ struct MobileContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         } else if let result {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 14) {
                     Text(result.korean)
                         .font(.title3).textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    Button {
+                        speaker.toggle(result.korean, direction: settings.direction, rate: Float(settings.speechRate))
+                    } label: {
+                        Image(systemName: speaker.isSpeaking ? "stop.circle.fill" : "speaker.wave.2.fill")
+                    }
+                    .accessibilityLabel(speaker.isSpeaking ? "読み上げを停止" : "結果を読み上げる")
                     Button {
                         UIPasteboard.general.string = result.korean
                         copied = true
@@ -154,6 +173,7 @@ struct MobileContentView: View {
                     } label: {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
                     }
+                    .accessibilityLabel("結果をコピー")
                 }
                 if let notes = result.notes {
                     DisclosureGroup("補足メモ") {
@@ -172,18 +192,27 @@ struct MobileContentView: View {
 
     private func translate() {
         if speech.isRecording { speech.stop() }
+        speaker.stop()
         let text = input
+        let direction = settings.direction
         errorMessage = nil; result = nil; copied = false; isLoading = true
         Task {
             do {
                 let r = try await service.translate(
                     text: text,
-                    direction: settings.direction,
+                    direction: direction,
                     apiKey: settings.apiKey,
                     model: settings.model,
                     webSearchUses: settings.effectiveWebSearchUses
                 )
-                await MainActor.run { result = r; isLoading = false }
+                await MainActor.run {
+                    result = r
+                    isLoading = false
+                    history.add(source: text, result: r, direction: direction)
+                    if settings.autoSpeak {
+                        speaker.speak(r.korean, direction: direction, rate: Float(settings.speechRate))
+                    }
+                }
             } catch {
                 await MainActor.run {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -191,5 +220,16 @@ struct MobileContentView: View {
                 }
             }
         }
+    }
+
+    /// 履歴から1件を選んだとき、その内容を本画面に復元する。
+    private func applyHistory(_ item: HistoryItem) {
+        if speech.isRecording { speech.stop() }
+        speaker.stop()
+        settings.direction = item.direction
+        input = item.sourceText
+        result = TranslationResult(korean: item.translatedText, notes: item.notes)
+        errorMessage = nil
+        copied = false
     }
 }

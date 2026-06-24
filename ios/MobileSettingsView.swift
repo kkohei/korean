@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct MobileSettingsView: View {
     @EnvironmentObject var settings: MobileSettings
@@ -42,6 +43,19 @@ struct MobileSettingsView: View {
                     Toggle("固有名詞・専門用語を検索して確認", isOn: $settings.webSearchEnabled)
                     if settings.webSearchEnabled {
                         Stepper("最大検索回数：\(settings.webSearchUses)", value: $settings.webSearchUses, in: 1...10)
+                    }
+                }
+
+                Section("読み上げ（音声）") {
+                    Toggle("翻訳後に自動で読み上げる", isOn: $settings.autoSpeak)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("読み上げ速度").font(.footnote).foregroundStyle(.secondary)
+                        HStack {
+                            Image(systemName: "tortoise").foregroundStyle(.secondary)
+                            Slider(value: $settings.speechRate,
+                                   in: Double(AVSpeechUtteranceMinimumSpeechRate)...Double(AVSpeechUtteranceMaximumSpeechRate))
+                            Image(systemName: "hare").foregroundStyle(.secondary)
+                        }
                     }
                 }
 

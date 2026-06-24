@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct KoreanTranslatorMobileApp: App {
     @StateObject private var settings = MobileSettings()
+    @StateObject private var history = HistoryStore()
 
     var body: some Scene {
         WindowGroup {
             MobileContentView()
                 .environmentObject(settings)
+                .environmentObject(history)
         }
     }
 }

@@ -2,6 +2,12 @@
 
 Mac版と**翻訳エンジンを共有**したiPhoneアプリです。マイクで話すと、日本語/韓国語を認識して翻訳します（音声入力）。配布は **TestFlight** を想定しています。
 
+**できること**
+- 🎙️ **音声入力** … マイクで話すと日本語/韓国語を認識して翻訳
+- 🔊 **読み上げ（TTS）** … 結果をターゲット言語の声で読み上げ（翻訳後の自動読み上げ・速度調整つき）。声で話して声で返る会話翻訳機に
+- 🕘 **翻訳履歴** … 直近の翻訳を端末に保存。タップで呼び戻し・再読み上げ、スワイプ削除
+- 🔁 日本語⇄韓国語の双方向／🌐 固有名詞はネット検索で確認／📋 コピー／🔒 APIキーはKeychain保存
+
 > iOSアプリは Swift Package では作れないため、**Xcodeでプロジェクトを作成**して、下記のソースを追加する方式です。
 
 ---
@@ -33,6 +39,9 @@ Mac版と**翻訳エンジンを共有**したiPhoneアプリです。マイク�
 - `MobileSettingsView.swift`
 - `MobileSettings.swift`
 - `SpeechRecognizer.swift`
+- `SpeechSynthesizer.swift` ← 結果の読み上げ（TTS）
+- `MobileHistory.swift` ← 翻訳履歴の保存
+- `MobileHistoryView.swift` ← 履歴の一覧画面
 
 **Mac版と共有（`macos/Sources/KoreanTranslator/` フォルダ）**
 - `TranslationService.swift` ← 翻訳の中核（Web検索つきClaude API）
@@ -81,10 +90,13 @@ Mac版と**翻訳エンジンを共有**したiPhoneアプリです。マイク�
 | ファイル | 役割 |
 |---|---|
 | `KoreanTranslatorMobileApp.swift` | アプリのエントリポイント |
-| `MobileContentView.swift` | メイン画面（方向切替・入力・マイク・翻訳・結果） |
+| `MobileContentView.swift` | メイン画面（方向切替・入力・マイク・翻訳・結果・読み上げ・履歴） |
 | `MobileSettingsView.swift` | 設定画面 |
 | `MobileSettings.swift` | 設定の保持・永続化 |
 | `SpeechRecognizer.swift` | 音声入力（Speechフレームワーク） |
+| `SpeechSynthesizer.swift` | 結果の読み上げ（AVSpeechSynthesizer・端末内TTS） |
+| `MobileHistory.swift` | 翻訳履歴の保持・永続化（UserDefaults） |
+| `MobileHistoryView.swift` | 翻訳履歴の一覧画面 |
 | `TranslationService.swift`（共有） | Web検索つきClaude API呼び出し |
 | `Keychain.swift`（共有） | APIキーの安全保存 |
 
