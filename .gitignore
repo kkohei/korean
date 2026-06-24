@@ -1,6 +1,8 @@
 .build/
+AppIcon.icns
 .swiftpm/
 *.app/
+*.dmg
 .DS_Store
 xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/

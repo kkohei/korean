@@ -1,9 +1,13 @@
 # 日韓翻訳 (Korean Translator)
 
-Mac のメニューバーに常駐する、小さな **日本語 → 韓国語** 翻訳アプリです。
+Mac のメニューバーに常駐する、小さな **日本語 ⇄ 韓国語** 翻訳アプリです（双方向対応）。
 Claude API の **Web検索ツール**を併用し、固有名詞・専門用語・流行語などをネットで確認しながら、文脈に合った正確な韓国語を出力します。
 
-- 🪟 メニューバー常駐の小さなウィンドウ（Dockにアイコンを出さず邪魔にならない）
+- 🔁 日本語 → 韓国語 / 韓国語 → 日本語 の双方向（入れ替えボタンで切替・方向を記憶）
+- 🖥️ ターミナル風デザイン（半透明グレー背景＋蛍光グリーンの等幅文字）
+- 🎛️ 配色プリセット（ターミナル緑／ローズゴールド×ベージュ／サクラ／ラベンダー／シャンパン／モノクロ）＋文字色・背景色をスライダーで微調整
+- 🪟 デスクトップ上を自由に動かせる小さなフローティングウィンドウ（Dockにアイコンを出さず邪魔にならない）
+- 📌 最前面に固定 / 解除を切替可能。ウィンドウ位置は記憶される
 - 🌐 ネット検索を使って固有名詞や専門用語まで正確に翻訳
 - 📋 クリップボードから貼り付け / 結果を自動コピー
 - 🔒 APIキーは macOS の Keychain に安全に保存
@@ -44,7 +48,8 @@ cd korean
 open KoreanTranslator.app
 ```
 
-- 起動すると、画面右上のメニューバーに **「韓」** アイコンが出ます。クリックでウィンドウが開きます。
+- 起動すると、画面右上のメニューバーに **「韓」** アイコンが出ます。クリックでウィンドウの表示/非表示を切り替えられます。
+- ウィンドウはタイトルバー（または背景）をドラッグして、**デスクトップの好きな場所へ移動**できます。位置は次回も記憶されます。
 - いつも使うなら `KoreanTranslator.app` を `/Applications` に移動してください。
 - ログイン時に自動起動したい場合は、**システム設定 → 一般 → ログイン項目** にこのアプリを追加します。
 
@@ -57,7 +62,8 @@ open KoreanTranslator.app
 ## 4. 使い方
 
 1. メニューバーの **「韓」** をクリック
-2. 日本語を入力（または **貼り付け** ボタンでクリップボードから取り込み）
+2. 上部の **⇄ 入れ替えボタン**で翻訳方向（日→韓 / 韓→日）を選ぶ
+3. 文章を入力（または **貼り付け** ボタンでクリップボードから取り込み）
 3. **翻訳** ボタン、または **⌘ + Return** で翻訳
 4. 結果の韓国語右の **コピーボタン** でコピー
 5. 固有名詞などの判断根拠がある場合は **補足メモ** に表示されます
@@ -68,6 +74,7 @@ open KoreanTranslator.app
 - **翻訳モデル**の切替（Sonnet＝速い / Opus＝最高精度 / Haiku＝最速・低コスト）
 - **ネット検索のON/OFF** と最大検索回数
 - 翻訳後の **自動コピー**
+- **外観**（配色プリセットをワンタップ選択／文字色・背景色をHSBスライダーで微調整。リセットでターミナル緑に戻る）
 
 ---
 
@@ -85,21 +92,88 @@ xattr -dr com.apple.quarantine KoreanTranslator.app
 
 ---
 
-## 6. 構成
+## 6. 配布用のちゃんとした署名・公証（任意）
+
+自分の Mac で使うだけなら `./build.sh`（アドホック署名）で十分です。
+**他人に配って警告なしで開けるようにする**には、Apple Developer Program（年 99 USD）の証明書で署名し、公証（Notarization）します。
+
+1. **Developer ID 証明書を用意**
+   - [Apple Developer Program](https://developer.apple.com/programs/) に登録
+   - Xcode →「Settings → Accounts」でログイン →「Manage Certificates」→ ＋ →「Developer ID Application」を作成
+2. **署名してビルド**（証明書名は「キーチェーンアクセス」で確認できます）
+   ```bash
+   CODESIGN_ID="Developer ID Application: あなたの名前 (TEAMID)" ./build.sh
+   ```
+3. **公証（Notarization）**（初回は App用パスワードを発行：appleid.apple.com）
+   ```bash
+   # zip にまとめて提出
+   ditto -c -k --keepParent KoreanTranslator.app KoreanTranslator.zip
+   xcrun notarytool submit KoreanTranslator.zip \
+     --apple-id "あなたのAppleID" \
+     --team-id "TEAMID" \
+     --password "App用パスワード" --wait
+   # 通ったらチケットをアプリに貼り付け
+   xcrun stapler staple KoreanTranslator.app
+   ```
+
+これで、配布先の Mac でも右クリックなしでそのまま開けるようになります。
+
+---
+
+## 7. 構成
 
 | ファイル | 役割 |
 |---|---|
-| `Sources/KoreanTranslator/KoreanTranslatorApp.swift` | アプリ本体（メニューバー常駐） |
+| `Sources/KoreanTranslator/KoreanTranslatorApp.swift` | アプリのエントリポイント |
+| `Sources/KoreanTranslator/AppDelegate.swift` | メニューバー常駐＋フローティングウィンドウ管理 |
 | `Sources/KoreanTranslator/ContentView.swift` | 翻訳画面のUI |
 | `Sources/KoreanTranslator/SettingsView.swift` | 設定画面 |
 | `Sources/KoreanTranslator/TranslationService.swift` | Claude API + Web検索の呼び出し |
 | `Sources/KoreanTranslator/AppSettings.swift` | 設定の保持・永続化 |
 | `Sources/KoreanTranslator/Keychain.swift` | APIキーのKeychain保存 |
-| `build.sh` | `.app` バンドルの生成 |
+| `Sources/KoreanTranslator/Theme.swift` | 配色・等幅フォント・半透明背景 |
+| `AppIcon.iconset/` | アプリアイコン（ビルド時に `.icns` へ変換） |
+| `build.sh` | `.app` バンドルの生成・アイコン埋め込み・署名 |
+| `make-dmg.sh` | 配布用 `.dmg` の作成 |
+| `docs/index.html` | GitHub Pages 用ダウンロードページ |
+| `INSTALL.md` | 配布先の人向けインストール手順 |
 
 ---
 
-## 7. 費用について
+## 8. 個人で配布する
+
+### (1) 配布用 DMG を作る
+
+```bash
+./make-dmg.sh              # KoreanTranslator.dmg ができる
+```
+
+「アプリを Applications へドラッグ」する画面付きの `.dmg` が生成されます。
+正式署名する場合は `CODESIGN_ID="Developer ID Application: 名前 (TEAMID)" ./make-dmg.sh`。
+
+### (2) GitHub Releases に置く（ダウンロードURLができる）
+
+1. GitHub のリポジトリ →「Releases」→「Draft a new release」
+2. タグ（例 `v1.0`）を付けて、作った `KoreanTranslator.dmg` を **そのままのファイル名で**添付
+3. Publish すると、固定URL `…/releases/latest/download/KoreanTranslator.dmg` で配れます
+
+### (3) ダウンロードページ（GitHub Pages）
+
+`docs/index.html` がダウンロードボタン付きの配布ページです。
+
+1. GitHub のリポジトリ →「Settings → Pages」
+2. 「Build and deployment」の Source を **Deploy from a branch**、ブランチを `main`、フォルダを **/docs** に設定
+3. 数分後に `https://kkohei.github.io/korean/` で公開されます
+   （ダウンロードボタンは上記 (2) の Release ファイルを指します）
+
+### (4) 受け取る人への案内
+
+`INSTALL.md` をそのまま渡せば、インストール〜APIキー設定まで案内できます。
+（未署名の場合は初回だけ「右クリック → 開く」が必要なことも書いてあります）
+
+---
+
+## 9. 費用について
 
 翻訳1回ごとに Claude API の利用料が発生します（テキストが短いので通常はごくわずか）。
 Web検索を有効にすると検索1回ごとにも少額の料金がかかります。詳しくは

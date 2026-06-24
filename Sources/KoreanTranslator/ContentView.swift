@@ -14,17 +14,26 @@ struct ContentView: View {
     private let service = TranslationService()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-            inputArea
-            actionRow
-            Divider()
-            outputArea
-            Spacer(minLength: 0)
-            footer
+        ZStack {
+            // ターミナル風：背後ぼかし＋半透明グレーの重ね
+            VisualEffectBackground(light: settings.isLightBackground).ignoresSafeArea()
+            settings.backgroundColor.opacity(settings.backgroundOpacity).ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 10) {
+                header
+                inputArea
+                actionRow
+                terminalDivider
+                outputArea
+                Spacer(minLength: 0)
+                footer
+            }
+            // 透明タイトルバー分の余白を上に確保
+            .padding(EdgeInsets(top: 28, leading: 14, bottom: 12, trailing: 14))
         }
-        .padding(12)
         .frame(width: 360, height: 480)
+        .tint(settings.textColor)
+        .foregroundStyle(settings.textColor)
         .sheet(isPresented: $showSettings) {
             SettingsView().environmentObject(settings)
         }
@@ -33,9 +42,19 @@ struct ContentView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack {
-            Text("日本語 → 한국어")
-                .font(.headline)
+        HStack(spacing: 8) {
+            Text(settings.direction.headerText)
+                .font(Theme.mono(13, weight: .bold))
+            Button {
+                settings.direction = settings.direction.toggled
+                result = nil
+                errorMessage = nil
+            } label: {
+                Image(systemName: "arrow.left.arrow.right")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(settings.textColor)
+            .help("翻訳方向を入れ替え")
             Spacer()
             Button {
                 showSettings = true
@@ -43,6 +62,7 @@ struct ContentView: View {
                 Image(systemName: "gearshape")
             }
             .buttonStyle(.borderless)
+            .foregroundStyle(settings.textColor)
             .help("設定")
         }
     }
@@ -51,16 +71,17 @@ struct ContentView: View {
 
     private var inputArea: some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(nsColor: .separatorColor))
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(settings.textColorFaint, lineWidth: 1)
             TextEditor(text: $input)
-                .font(.system(size: 14))
+                .font(Theme.mono(14))
+                .foregroundColor(settings.textColor)
                 .scrollContentBackground(.hidden)
                 .padding(6)
             if input.isEmpty {
-                Text("翻訳したい日本語を入力…")
-                    .foregroundStyle(.secondary)
-                    .font(.system(size: 14))
+                Text(settings.direction.inputPlaceholder)
+                    .foregroundStyle(settings.textColorDim)
+                    .font(Theme.mono(14))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 14)
                     .allowsHitTesting(false)
@@ -99,6 +120,13 @@ struct ContentView: View {
             .disabled(isLoading || input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .help("⌘↩ で翻訳")
         }
+        .font(Theme.mono(12))
+    }
+
+    private var terminalDivider: some View {
+        Rectangle()
+            .fill(settings.textColorFaint)
+            .frame(height: 1)
     }
 
     // MARK: - Output
@@ -112,22 +140,22 @@ struct ContentView: View {
                         Text(settings.effectiveWebSearchUses > 0
                              ? "ネット検索しながら翻訳中…"
                              : "翻訳中…")
-                            .foregroundStyle(.secondary)
-                            .font(.system(size: 13))
+                            .foregroundStyle(settings.textColorDim)
+                            .font(Theme.mono(13))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let errorMessage {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.system(size: 13))
+                        .foregroundStyle(Color(red: 1.0, green: 0.35, blue: 0.35))
+                        .font(Theme.mono(13))
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let result {
                     resultView(result)
                 } else {
                     Text("結果がここに表示されます。")
-                        .foregroundStyle(.tertiary)
-                        .font(.system(size: 13))
+                        .foregroundStyle(settings.textColorFaint)
+                        .font(Theme.mono(13))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -140,7 +168,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 Text(result.korean)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Theme.mono(16, weight: .medium))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
@@ -149,18 +177,20 @@ struct ContentView: View {
                     Image(systemName: copied ? "checkmark" : "doc.on.doc")
                 }
                 .buttonStyle(.borderless)
-                .help("韓国語をコピー")
+                .foregroundStyle(settings.textColor)
+                .help(settings.direction.copyHelp)
             }
 
             if let notes = result.notes {
                 DisclosureGroup("補足メモ") {
                     Text(notes)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .font(Theme.mono(12))
+                        .foregroundStyle(settings.textColorDim)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .font(.system(size: 12))
+                .font(Theme.mono(12))
+                .tint(settings.textColor)
             }
         }
     }
@@ -171,21 +201,31 @@ struct ContentView: View {
         HStack {
             if !settings.hasAPIKey {
                 Label("APIキー未設定", systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.orange)
+                    .font(Theme.mono(11))
+                    .foregroundStyle(Color(red: 1.0, green: 0.7, blue: 0.2))
                     .onTapGesture { showSettings = true }
             } else {
                 Text(modelLabel)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
+                    .font(Theme.mono(11))
+                    .foregroundStyle(settings.textColorDim)
             }
             Spacer()
+            Button {
+                settings.alwaysOnTop.toggle()
+            } label: {
+                Image(systemName: settings.alwaysOnTop ? "pin.fill" : "pin.slash")
+            }
+            .buttonStyle(.borderless)
+            .font(Theme.mono(11))
+            .foregroundStyle(settings.alwaysOnTop ? settings.textColor : settings.textColorDim)
+            .help(settings.alwaysOnTop ? "最前面に固定中（クリックで解除）" : "最前面固定は解除中")
+
             Button("終了") {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.borderless)
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
+            .font(Theme.mono(11))
+            .foregroundStyle(settings.textColorDim)
         }
     }
 
@@ -205,7 +245,8 @@ struct ContentView: View {
         Task {
             do {
                 let r = try await service.translate(
-                    japanese: text,
+                    text: text,
+                    direction: settings.direction,
                     apiKey: settings.apiKey,
                     model: settings.model,
                     webSearchUses: settings.effectiveWebSearchUses
