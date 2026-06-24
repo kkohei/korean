@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import AVFoundation
 
 /// 翻訳結果の読み上げ（Text-to-Speech）。

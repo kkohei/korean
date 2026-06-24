@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import AVFoundation
 
 /// iOS版アプリの設定。APIキーは Keychain、その他は UserDefaults に保存。
