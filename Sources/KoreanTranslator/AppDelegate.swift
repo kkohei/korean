@@ -31,8 +31,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.title = "韓"
-            button.font = .systemFont(ofSize: 13, weight: .semibold)
+            // 蛍光グリーンの「韓」をメニューバーに表示
+            button.attributedTitle = NSAttributedString(
+                string: "韓",
+                attributes: [
+                    .foregroundColor: Theme.phosphorNSColor,
+                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold)
+                ]
+            )
             button.target = self
             button.action = #selector(togglePanel)
             button.toolTip = "日韓翻訳（クリックで開閉）"
@@ -46,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 480),
-            styleMask: [.titled, .closable, .utilityWindow],
+            styleMask: [.titled, .closable, .utilityWindow, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -59,6 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
         panel.standardWindowButton(.zoomButton)?.isHidden = true
+
+        // ターミナル風の半透明背景：タイトルバーを透明にし、ウィンドウ自体を透過させる。
+        panel.titlebarAppearsTransparent = true
+        panel.titleVisibility = .hidden
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.appearance = NSAppearance(named: .darkAqua)
 
         // 位置はユーザーが動かした場所を記憶する。初回は画面中央。
         panel.setFrameAutosaveName("KoreanTranslatorPanel")
