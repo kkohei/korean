@@ -17,7 +17,7 @@ struct ContentView: View {
         ZStack {
             // ターミナル風：背後ぼかし＋半透明グレーの重ね
             VisualEffectBackground().ignoresSafeArea()
-            Color(white: 0.07).opacity(0.55).ignoresSafeArea()
+            Color(white: 0.07).opacity(settings.backgroundOpacity).ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 10) {
                 header
@@ -32,8 +32,8 @@ struct ContentView: View {
             .padding(EdgeInsets(top: 28, leading: 14, bottom: 12, trailing: 14))
         }
         .frame(width: 360, height: 480)
-        .tint(Theme.phosphor)
-        .foregroundStyle(Theme.phosphor)
+        .tint(settings.textColor)
+        .foregroundStyle(settings.textColor)
         .sheet(isPresented: $showSettings) {
             SettingsView().environmentObject(settings)
         }
@@ -53,7 +53,7 @@ struct ContentView: View {
                 Image(systemName: "arrow.left.arrow.right")
             }
             .buttonStyle(.borderless)
-            .foregroundStyle(Theme.phosphor)
+            .foregroundStyle(settings.textColor)
             .help("翻訳方向を入れ替え")
             Spacer()
             Button {
@@ -62,7 +62,7 @@ struct ContentView: View {
                 Image(systemName: "gearshape")
             }
             .buttonStyle(.borderless)
-            .foregroundStyle(Theme.phosphor)
+            .foregroundStyle(settings.textColor)
             .help("設定")
         }
     }
@@ -72,15 +72,15 @@ struct ContentView: View {
     private var inputArea: some View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 6)
-                .stroke(Theme.phosphorFaint, lineWidth: 1)
+                .stroke(settings.textColorFaint, lineWidth: 1)
             TextEditor(text: $input)
                 .font(Theme.mono(14))
-                .foregroundColor(Theme.phosphor)
+                .foregroundColor(settings.textColor)
                 .scrollContentBackground(.hidden)
                 .padding(6)
             if input.isEmpty {
                 Text(settings.direction.inputPlaceholder)
-                    .foregroundStyle(Theme.phosphorDim)
+                    .foregroundStyle(settings.textColorDim)
                     .font(Theme.mono(14))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 14)
@@ -125,7 +125,7 @@ struct ContentView: View {
 
     private var terminalDivider: some View {
         Rectangle()
-            .fill(Theme.phosphorFaint)
+            .fill(settings.textColorFaint)
             .frame(height: 1)
     }
 
@@ -140,7 +140,7 @@ struct ContentView: View {
                         Text(settings.effectiveWebSearchUses > 0
                              ? "ネット検索しながら翻訳中…"
                              : "翻訳中…")
-                            .foregroundStyle(Theme.phosphorDim)
+                            .foregroundStyle(settings.textColorDim)
                             .font(Theme.mono(13))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -154,7 +154,7 @@ struct ContentView: View {
                     resultView(result)
                 } else {
                     Text("結果がここに表示されます。")
-                        .foregroundStyle(Theme.phosphorFaint)
+                        .foregroundStyle(settings.textColorFaint)
                         .font(Theme.mono(13))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -177,7 +177,7 @@ struct ContentView: View {
                     Image(systemName: copied ? "checkmark" : "doc.on.doc")
                 }
                 .buttonStyle(.borderless)
-                .foregroundStyle(Theme.phosphor)
+                .foregroundStyle(settings.textColor)
                 .help(settings.direction.copyHelp)
             }
 
@@ -185,12 +185,12 @@ struct ContentView: View {
                 DisclosureGroup("補足メモ") {
                     Text(notes)
                         .font(Theme.mono(12))
-                        .foregroundStyle(Theme.phosphorDim)
+                        .foregroundStyle(settings.textColorDim)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .font(Theme.mono(12))
-                .tint(Theme.phosphor)
+                .tint(settings.textColor)
             }
         }
     }
@@ -207,7 +207,7 @@ struct ContentView: View {
             } else {
                 Text(modelLabel)
                     .font(Theme.mono(11))
-                    .foregroundStyle(Theme.phosphorDim)
+                    .foregroundStyle(settings.textColorDim)
             }
             Spacer()
             Button {
@@ -217,7 +217,7 @@ struct ContentView: View {
             }
             .buttonStyle(.borderless)
             .font(Theme.mono(11))
-            .foregroundStyle(settings.alwaysOnTop ? Theme.phosphor : Theme.phosphorDim)
+            .foregroundStyle(settings.alwaysOnTop ? settings.textColor : settings.textColorDim)
             .help(settings.alwaysOnTop ? "最前面に固定中（クリックで解除）" : "最前面固定は解除中")
 
             Button("終了") {
@@ -225,7 +225,7 @@ struct ContentView: View {
             }
             .buttonStyle(.borderless)
             .font(Theme.mono(11))
-            .foregroundStyle(Theme.phosphorDim)
+            .foregroundStyle(settings.textColorDim)
         }
     }
 

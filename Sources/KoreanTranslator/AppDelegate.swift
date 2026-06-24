@@ -22,6 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] on in self?.applyAlwaysOnTop(on) }
             .store(in: &cancellables)
 
+        // 文字色の変更をメニューバーの「韓」に反映する。
+        settings.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                DispatchQueue.main.async { self?.updateStatusItemColor() }
+            }
+            .store(in: &cancellables)
+
         // 初回起動時はウィンドウを表示して場所を知らせる。
         showPanel()
     }
@@ -31,18 +39,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            // 蛍光グリーンの「韓」をメニューバーに表示
-            button.attributedTitle = NSAttributedString(
-                string: "韓",
-                attributes: [
-                    .foregroundColor: Theme.phosphorNSColor,
-                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold)
-                ]
-            )
             button.target = self
             button.action = #selector(togglePanel)
             button.toolTip = "日韓翻訳（クリックで開閉）"
         }
+        updateStatusItemColor()
+    }
+
+    /// メニューバーの「韓」を現在の文字色で描き直す。
+    private func updateStatusItemColor() {
+        statusItem?.button?.attributedTitle = NSAttributedString(
+            string: "韓",
+            attributes: [
+                .foregroundColor: settings.textNSColor,
+                .font: NSFont.systemFont(ofSize: 13, weight: .semibold)
+            ]
+        )
     }
 
     // MARK: - フローティングウィンドウ

@@ -11,7 +11,7 @@ struct SettingsView: View {
     var body: some View {
         ZStack {
             VisualEffectBackground().ignoresSafeArea()
-            Color(white: 0.07).opacity(0.6).ignoresSafeArea()
+            Color(white: 0.07).opacity(settings.backgroundOpacity).ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
@@ -42,7 +42,7 @@ struct SettingsView: View {
                             Image(systemName: showKey ? "eye.slash" : "eye")
                         }
                         .buttonStyle(.borderless)
-                        .foregroundStyle(Theme.phosphor)
+                        .foregroundStyle(settings.textColor)
                     }
                     HStack {
                         Button("保存") {
@@ -52,7 +52,7 @@ struct SettingsView: View {
                         if settings.hasAPIKey {
                             Label("保存済み", systemImage: "checkmark.seal.fill")
                                 .font(Theme.mono(11))
-                                .foregroundStyle(Theme.phosphor)
+                                .foregroundStyle(settings.textColor)
                         }
                         Spacer()
                         Link("キーを取得 →", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
@@ -60,7 +60,7 @@ struct SettingsView: View {
                     }
                     Text("キーは macOS の Keychain に安全に保存され、Anthropic以外には送信されません。")
                         .font(Theme.mono(10))
-                        .foregroundStyle(Theme.phosphorDim)
+                        .foregroundStyle(settings.textColorDim)
                 }
 
                 themedDivider
@@ -88,7 +88,7 @@ struct SettingsView: View {
                             .font(Theme.mono(12))
                         Text("検索回数が多いほど正確になりやすいですが、時間と費用が増えます。")
                             .font(Theme.mono(10))
-                            .foregroundStyle(Theme.phosphorDim)
+                            .foregroundStyle(settings.textColorDim)
                     }
                 }
 
@@ -100,19 +100,51 @@ struct SettingsView: View {
                 Toggle("ウィンドウを常に最前面に表示する", isOn: $settings.alwaysOnTop)
                     .font(Theme.mono(12))
 
+                themedDivider
+
+                // 外観の微調整
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("外観の微調整")
+                            .font(Theme.mono(12, weight: .bold))
+                        Spacer()
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(settings.textColor)
+                            .frame(width: 26, height: 14)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(settings.textColorFaint))
+                        Button("リセット") { settings.resetAppearance() }
+                            .font(Theme.mono(10))
+                    }
+
+                    slider("背景の濃さ", value: $settings.backgroundOpacity, range: 0.05...0.95)
+                    slider("文字色（色相）", value: $settings.textHue, range: 0.0...1.0)
+                    slider("文字の鮮やかさ", value: $settings.textSaturation, range: 0.0...1.0)
+                    slider("文字の明るさ", value: $settings.textBrightness, range: 0.3...1.0)
+                }
+
                 Spacer(minLength: 0)
             }
             .padding(16)
         }
-        .frame(width: 360, height: 460)
-        .tint(Theme.phosphor)
-        .foregroundStyle(Theme.phosphor)
+        .frame(width: 360, height: 600)
+        .tint(settings.textColor)
+        .foregroundStyle(settings.textColor)
         .onAppear { keyDraft = settings.apiKey }
     }
 
     private var themedDivider: some View {
         Rectangle()
-            .fill(Theme.phosphorFaint)
+            .fill(settings.textColorFaint)
             .frame(height: 1)
+    }
+
+    private func slider(_ label: String, value: Binding<Double>,
+                        range: ClosedRange<Double>) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(Theme.mono(11))
+                .frame(width: 104, alignment: .leading)
+            Slider(value: value, in: range)
+        }
     }
 }
