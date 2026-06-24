@@ -91,6 +91,9 @@ struct SettingsView: View {
             Toggle("翻訳後に韓国語を自動でコピーする", isOn: $settings.autoCopy)
                 .font(.system(size: 12))
 
+            Toggle("ウィンドウを常に最前面に表示する", isOn: $settings.alwaysOnTop)
+                .font(.system(size: 12))
+
             Spacer(minLength: 0)
         }
         .padding(16)

@@ -18,6 +18,10 @@ final class AppSettings: ObservableObject {
     @Published var autoCopy: Bool {
         didSet { UserDefaults.standard.set(autoCopy, forKey: "autoCopy") }
     }
+    /// ウィンドウを常に最前面に表示するか。
+    @Published var alwaysOnTop: Bool {
+        didSet { UserDefaults.standard.set(alwaysOnTop, forKey: "alwaysOnTop") }
+    }
 
     /// 選択可能なモデル一覧（表示名, モデルID）
     static let availableModels: [(name: String, id: String)] = [
@@ -34,6 +38,7 @@ final class AppSettings: ObservableObject {
         webSearchEnabled = (d.object(forKey: "webSearchEnabled") as? Bool) ?? true
         webSearchUses = (d.object(forKey: "webSearchUses") as? Int) ?? 5
         autoCopy = (d.object(forKey: "autoCopy") as? Bool) ?? false
+        alwaysOnTop = (d.object(forKey: "alwaysOnTop") as? Bool) ?? true
     }
 
     /// 実際にAPIへ渡すWeb検索の最大回数（無効時は0）。

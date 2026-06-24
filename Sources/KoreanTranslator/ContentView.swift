@@ -180,6 +180,16 @@ struct ContentView: View {
                     .foregroundStyle(.tertiary)
             }
             Spacer()
+            Button {
+                settings.alwaysOnTop.toggle()
+            } label: {
+                Image(systemName: settings.alwaysOnTop ? "pin.fill" : "pin.slash")
+            }
+            .buttonStyle(.borderless)
+            .font(.system(size: 11))
+            .foregroundStyle(settings.alwaysOnTop ? .blue : .secondary)
+            .help(settings.alwaysOnTop ? "最前面に固定中（クリックで解除）" : "最前面固定は解除中")
+
             Button("終了") {
                 NSApplication.shared.terminate(nil)
             }

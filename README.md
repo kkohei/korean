@@ -3,7 +3,8 @@
 Mac のメニューバーに常駐する、小さな **日本語 → 韓国語** 翻訳アプリです。
 Claude API の **Web検索ツール**を併用し、固有名詞・専門用語・流行語などをネットで確認しながら、文脈に合った正確な韓国語を出力します。
 
-- 🪟 メニューバー常駐の小さなウィンドウ（Dockにアイコンを出さず邪魔にならない）
+- 🪟 デスクトップ上を自由に動かせる小さなフローティングウィンドウ（Dockにアイコンを出さず邪魔にならない）
+- 📌 最前面に固定 / 解除を切替可能。ウィンドウ位置は記憶される
 - 🌐 ネット検索を使って固有名詞や専門用語まで正確に翻訳
 - 📋 クリップボードから貼り付け / 結果を自動コピー
 - 🔒 APIキーは macOS の Keychain に安全に保存
@@ -44,7 +45,8 @@ cd korean
 open KoreanTranslator.app
 ```
 
-- 起動すると、画面右上のメニューバーに **「韓」** アイコンが出ます。クリックでウィンドウが開きます。
+- 起動すると、画面右上のメニューバーに **「韓」** アイコンが出ます。クリックでウィンドウの表示/非表示を切り替えられます。
+- ウィンドウはタイトルバー（または背景）をドラッグして、**デスクトップの好きな場所へ移動**できます。位置は次回も記憶されます。
 - いつも使うなら `KoreanTranslator.app` を `/Applications` に移動してください。
 - ログイン時に自動起動したい場合は、**システム設定 → 一般 → ログイン項目** にこのアプリを追加します。
 
@@ -89,7 +91,8 @@ xattr -dr com.apple.quarantine KoreanTranslator.app
 
 | ファイル | 役割 |
 |---|---|
-| `Sources/KoreanTranslator/KoreanTranslatorApp.swift` | アプリ本体（メニューバー常駐） |
+| `Sources/KoreanTranslator/KoreanTranslatorApp.swift` | アプリのエントリポイント |
+| `Sources/KoreanTranslator/AppDelegate.swift` | メニューバー常駐＋フローティングウィンドウ管理 |
 | `Sources/KoreanTranslator/ContentView.swift` | 翻訳画面のUI |
 | `Sources/KoreanTranslator/SettingsView.swift` | 設定画面 |
 | `Sources/KoreanTranslator/TranslationService.swift` | Claude API + Web検索の呼び出し |
