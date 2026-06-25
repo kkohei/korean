@@ -29,7 +29,18 @@ echo ""
 # 3) 起動（古いものが動いていれば終了してから開き直す）
 echo "▶︎ 起動します…"
 killall KoreanTranslator >/dev/null 2>&1 || true
-open ./KoreanTranslator.app
+
+# 古いビルド（移動前のリポジトリ直下や /Applications）が残っていると
+# そちらが開いてしまうことがあるので掃除する。
+rm -rf "../KoreanTranslator.app" 2>/dev/null || true
+if [ -d "/Applications/KoreanTranslator.app" ]; then
+    echo "  （/Applications の古いコピーを最新版で置き換えます）"
+    rm -rf "/Applications/KoreanTranslator.app"
+    cp -R "./KoreanTranslator.app" "/Applications/KoreanTranslator.app"
+fi
+
+# 必ず今ビルドしたものを絶対パスで開く
+open "$PWD/KoreanTranslator.app"
 echo ""
 echo "✅ 起動しました！メニューバーの「韓」をクリックして使ってください。"
 echo "（このターミナルのウィンドウは閉じて構いません）"
