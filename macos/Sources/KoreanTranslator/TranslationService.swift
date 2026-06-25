@@ -66,8 +66,13 @@ struct TranslationService {
             - 余計な前置きや解説を出力に含めない。
 
             出力フォーマット（厳守）:
-            1行目以降に韓国語訳のみを書く。
-            補足が必要な場合（固有名詞の根拠、表記の選択理由など）のみ、訳の後に独立した1行 `===NOTES===` を置き、その下に日本語で簡潔にメモを書く。補足が不要なら `===NOTES===` 自体を書かない。
+            前置き・あいさつ・思考過程・検索の説明など、翻訳以外の文章は一切書かない。
+            必ず次のマーカー形式だけで出力すること（マーカーより前には何も書かない）。
+
+            ===TRANSLATION===
+            （ここに韓国語訳の本文のみ）
+            ===NOTES===
+            （補足が必要な場合のみ日本語で簡潔に。固有名詞の根拠や表記の選択理由など。不要なら「なし」とだけ書く）
             """
         case .koToJa:
             return """
@@ -79,8 +84,13 @@ struct TranslationService {
             - 余計な前置きや解説を出力に含めない。
 
             出力フォーマット（厳守）:
-            1行目以降に日本語訳のみを書く。
-            補足が必要な場合（固有名詞の根拠、表記の選択理由など）のみ、訳の後に独立した1行 `===NOTES===` を置き、その下に日本語で簡潔にメモを書く。補足が不要なら `===NOTES===` 自体を書かない。
+            前置き・あいさつ・思考過程・検索の説明など、翻訳以外の文章は一切書かない。
+            必ず次のマーカー形式だけで出力すること（マーカーより前には何も書かない）。
+
+            ===TRANSLATION===
+            （ここに日本語訳の本文のみ）
+            ===NOTES===
+            （補足が必要な場合のみ日本語で簡潔に。固有名詞の根拠や表記の選択理由など。不要なら「なし」とだけ書く）
             """
         }
     }
@@ -159,15 +169,23 @@ struct TranslationService {
         return Self.parse(combined)
     }
 
-    /// `===NOTES===` 区切りで本文と補足メモを分離する。
+    /// 応答から最終的な訳文と補足メモを取り出す。
+    /// Web検索中にモデルが挟む途中コメントを除くため、`===TRANSLATION===` 以降のみを採用する。
+    /// マーカーが無い（旧形式の）応答にも後方互換で対応する。
     private static func parse(_ raw: String) -> TranslationResult {
-        let parts = raw.components(separatedBy: "===NOTES===")
-        let korean = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+        var working = raw
+        // 最後の ===TRANSLATION=== 以降だけを本文候補にする（前の解説文は捨てる）。
+        if let range = working.range(of: "===TRANSLATION===", options: .backwards) {
+            working = String(working[range.upperBound...])
+        }
+        let parts = working.components(separatedBy: "===NOTES===")
+        let body = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         if parts.count > 1 {
             let notes = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            return TranslationResult(korean: korean, notes: notes.isEmpty ? nil : notes)
+            let cleaned = (notes.isEmpty || notes == "なし") ? nil : notes
+            return TranslationResult(korean: body, notes: cleaned)
         }
-        return TranslationResult(korean: korean, notes: nil)
+        return TranslationResult(korean: body, notes: nil)
     }
 
     /// エラーレスポンス JSON から error.message を取り出す。
